@@ -2,7 +2,10 @@ import InertiaScroll from './inertiaScroll'
 import Matrix from './matrix'
 import ScrollBar from './scrollbar'
 
-function ScrollView (container, panel, scrollBarH, scrollBarV) {
+function ScrollView (container, panel) {
+  container.style.overflow = 'hidden'
+  container.style.position = 'relative'
+  let { scrollBarH, scrollBarV } = createScrollBar(container)
   var containerClientHeight = container.clientHeight
   var containerClientWidth = container.clientWidth
   var startOffsetX = -(containerClientWidth / 2)
@@ -111,6 +114,34 @@ function ScrollView (container, panel, scrollBarH, scrollBarV) {
       miny: panelMatrix.MIN_OFFSETY,
       maxy: panelMatrix.MAX_OFFSETY
     })
+  }
+}
+function createScrollBar (container) {
+  var h = document.createElement('div')
+  var v = document.createElement('div')
+  h.style.cssText = `
+            position: absolute;
+            top:0px;
+            right: 1px;
+            width: 3px;
+            background: rgba(0, 0, 0, .4);
+            border-radius: 3px;
+            transition: opacity .2s ease;
+  `
+  v.style.cssText = `
+            position: absolute;
+            bottom:1px;
+            left: 0px;
+            background: rgba(0, 0, 0, .4);
+            height: 3px;
+            border-radius: 3px;
+            transition: opacity .2s ease;
+  `
+  container.appendChild(h)
+  container.appendChild(v)
+  return {
+    scrollBarH: h,
+    scrollBarV: v
   }
 }
 module.exports = ScrollView

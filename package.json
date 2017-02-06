@@ -7,10 +7,10 @@
     "test": "./node_modules/mocha/bin/mocha --compilers js:babel-core/register -t 5000 test/index.test.js",
     "build": "./node_modules/.bin/webpack --config config/build.js",
     "n": "browser-sync start --server --files 'dist/*' & ./node_modules/.bin/webpack --watch",
-    "dev": "./node_modules/.bin/ webpack-dev-server --inline --hot --config config/dev.js --port 3000"
+    "dev": "./node_modules/.bin/ webpack-dev-server --config config/dev.js --inline --hot --port 3000 --host 0.0.0.0"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "babel-core": "^6.21.0",
     "babel-loader": "^6.2.10",
@@ -22,7 +22,9 @@
     "eslint-config-standard": "^6.2.1",
     "eslint-plugin-promise": "^3.4.0",
     "eslint-plugin-standard": "^2.0.1",
-    "html-webpack-plugin": "^2.26.0",
+    "html-loader": "^0.4.4",
+    "html-webpack-harddisk-plugin": "git+https://github.com/CaptEmulation/html-webpack-harddisk-plugin.git",
+    "html-webpack-plugin": "^2.28.0",
     "mocha": "^3.2.0",
     "webpack": "^1.14.0",
     "webpack-dev-server": "^1.16.2"
