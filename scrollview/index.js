@@ -2,10 +2,13 @@ import InertiaScroll from './inertiaScroll'
 import Matrix from './matrix'
 import ScrollBar from './scrollbar'
 
-function ScrollView (container, panel) {
+function ScrollView (container) {
   container.style.overflow = 'hidden'
   container.style.position = 'relative'
   let { scrollBarH, scrollBarV } = createScrollBar(container)
+  // panel
+  var panel = container.children[0]
+  if (!panel) return
   var containerClientHeight = container.clientHeight
   var containerClientWidth = container.clientWidth
   var startOffsetX = -(containerClientWidth / 2)

@@ -7,7 +7,7 @@
     "test": "./node_modules/mocha/bin/mocha --compilers js:babel-core/register -t 5000 test/index.test.js",
     "build": "./node_modules/.bin/webpack --config config/build.js",
     "n": "browser-sync start --server --files 'dist/*' & ./node_modules/.bin/webpack --watch",
-    "dev": "./node_modules/.bin/ webpack-dev-server --config config/dev.js --inline --hot --port 3000 --host 0.0.0.0"
+    "dev": "./node_modules/.bin/ webpack-dev-server --config config/dev.js --inline --hot --port 3000 --host 0.0.0.0 --public-path '/dist/'"
   },
   "author": "",
   "license": "MIT",
