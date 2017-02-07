@@ -76,7 +76,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.container = container;
 	  this.panel = container.children[0];
 	  if (!this.panel) return;
-	  this.opt = opt;
+	  this.opt = opt || {};
 	
 	  container.style.overflow = 'hidden';
 	  container.style.position = 'relative';

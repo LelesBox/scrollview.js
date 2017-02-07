@@ -6,7 +6,7 @@ function ScrollView (container, opt) {
   this.container = container
   this.panel = container.children[0]
   if (!this.panel) return
-  this.opt = opt
+  this.opt = opt || {}
   // 修复容器属性
   container.style.overflow = 'hidden'
   container.style.position = 'relative'
