@@ -4,9 +4,9 @@
 	else if(typeof define === 'function' && define.amd)
 		define([], factory);
 	else if(typeof exports === 'object')
-		exports["ScrollView"] = factory();
+		exports["scrollview"] = factory();
 	else
-		root["ScrollView"] = factory();
+		root["scrollview"] = factory();
 })(this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
@@ -70,7 +70,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
-	function ScrollView(container) {
+	function ScrollView(container, opt) {
+	  var _this = this;
+	
+	  this.container = container;
+	  this.panel = container.children[0];
+	  if (!this.panel) return;
+	  this.opt = opt;
+	
 	  container.style.overflow = 'hidden';
 	  container.style.position = 'relative';
 	
@@ -78,23 +85,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	      scrollBarH = _createScrollBar.scrollBarH,
 	      scrollBarV = _createScrollBar.scrollBarV;
 	
-	  var panel = container.children[0];
-	  if (!panel) return;
 	  var containerClientHeight = container.clientHeight;
 	  var containerClientWidth = container.clientWidth;
 	  var startOffsetX = -(containerClientWidth / 2);
 	  var startOffsetY = -(containerClientHeight / 2);
-	  var autoScroll = new _inertiaScroll2.default(panel);
-	  var panelMatrix = new _matrix2.default({
-	    panelWidth: panel.clientWidth,
-	    panelHeight: panel.clientHeight,
+	  var autoScroll = new _inertiaScroll2.default(this.panel);
+	  this.panelMatrix = new _matrix2.default({
+	    panelWidth: this.panel.clientWidth,
+	    panelHeight: this.panel.clientHeight,
 	    containerWidth: container.clientWidth,
-	    containerHeight: container.clientHeight
+	    containerHeight: container.clientHeight,
+	    maxScale: this.opt.maxScale || 4
 	  });
-	  panel.style.transformOrigin = 'center center';
+	  this.panel.style.transformOrigin = 'center center';
 	
-	  panel.style.transform = panelMatrix.translate(startOffsetX, startOffsetY);
-	  var scrollBarContext = new _scrollbar2.default(container, panel, scrollBarH, scrollBarV);
+	  this.panel.style.transform = this.panelMatrix.translate(startOffsetX, startOffsetY);
+	  this.scrollBar = new _scrollbar2.default(container, this.panel, scrollBarH, scrollBarV);
 	
 	  var sx = 0;
 	
@@ -108,87 +114,121 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var sy2 = -1;
 	
 	  var pinchLenght = 0;
-	  panel.addEventListener('touchstart', function (e) {
+	  this.panel.addEventListener('touchstart', movestart('touch').bind(this));
+	  this.panel.addEventListener('touchmove', moving('touch').bind(this));
+	  this.panel.addEventListener('touchend', moveend('touch').bind(this));
+	
+	  var isMouseDown = false;
+	  this.panel.addEventListener('mousedown', movestart('mouse').bind(this));
+	  this.panel.addEventListener('mousemove', moving('mouse').bind(this));
+	  this.panel.addEventListener('mouseup', moveend('mouse').bind(this));
+	  this.panel.addEventListener('mousewheel', function (e) {
 	    e.preventDefault();
-	    var touch = e.touches[0];
-	    var touch2 = e.touches[1];
-	    if (touch2) {
-	      sx2 = touch2.clientX;
-	      sy2 = touch2.clientY;
-	      pinchLenght = Math.sqrt(Math.pow(Math.abs(touch.clientX - touch2.clientX), 2) + Math.pow(Math.abs(touch.clientY - touch2.clientY), 2));
-	      var cx = Math.abs(touch.clientX + touch2.clientX) / 2;
-	      var cy = Math.abs(touch.clientY + touch2.clientY) / 2;
-	      var panelPosition = panel.getBoundingClientRect();
-	      var transformOriginX = cx - panelPosition.left;
-	      var transformOriginY = cy - panelPosition.top;
-	      var OriginOffsetX = transformOriginX / panelPosition.width * panel.clientWidth;
-	      var OriginOffsetY = transformOriginY / panelPosition.height * panel.clientHeight;
-	      panelMatrix.setOriginOffset(OriginOffsetX, OriginOffsetY);
-	    }
-	    sx = touch.clientX;
-	    sy = touch.clientY;
-	    autoScroll.init({
-	      x: sx,
-	      y: sy
-	    });
+	    _this.move(-e.deltaX, -e.deltaY);
 	  });
+	  function movestart(type) {
+	    return function (e) {
+	      e.preventDefault();
+	      var touch, touch2;
+	      if (type === 'touch') {
+	        touch = e.touches[0];
+	        touch2 = e.touches[1];
+	      } else if (type === 'mouse') {
+	        touch = e;
+	        isMouseDown = true;
+	      }
+	      if (touch2) {
+	        sx2 = touch2.clientX;
+	        sy2 = touch2.clientY;
+	        pinchLenght = Math.sqrt(Math.pow(Math.abs(touch.clientX - touch2.clientX), 2) + Math.pow(Math.abs(touch.clientY - touch2.clientY), 2));
+	        var cx = Math.abs(touch.clientX + touch2.clientX) / 2;
+	        var cy = Math.abs(touch.clientY + touch2.clientY) / 2;
+	        var panelPosition = this.panel.getBoundingClientRect();
+	        var transformOriginX = cx - panelPosition.left;
+	        var transformOriginY = cy - panelPosition.top;
+	        var OriginOffsetX = transformOriginX / panelPosition.width * this.panel.clientWidth;
+	        var OriginOffsetY = transformOriginY / panelPosition.height * this.panel.clientHeight;
+	        this.panelMatrix.setOriginOffset(OriginOffsetX, OriginOffsetY);
+	      }
+	      if (touch) {
+	        sx = touch.clientX;
+	        sy = touch.clientY;
+	        autoScroll.init({
+	          x: sx,
+	          y: sy
+	        });
+	      }
+	    };
+	  }
 	
-	  panel.addEventListener('touchmove', function (e) {
-	    var touch = e.touches[0];
-	    var touch2 = e.touches[1];
-	    if (touch2 && sx2 >= 0 && sy2 >= 0) {
-	      var newPinchLenght = Math.sqrt(Math.pow(Math.abs(touch.clientX - touch2.clientX), 2) + Math.pow(Math.abs(touch.clientY - touch2.clientY), 2));
-	      var deltaPinch = newPinchLenght - pinchLenght;
-	      pinchLenght = newPinchLenght;
-	      panel.style.transform = panelMatrix.addScale(deltaPinch / 100, {
-	        max: 4,
-	        min: 1
-	      });
-	      scrollBarContext.init({
-	        translatex: -panelMatrix.matrix3d.j,
-	        translatey: -panelMatrix.matrix3d.k,
-	        minx: panelMatrix.MIN_OFFSETX,
-	        maxx: panelMatrix.MAX_OFFSETX,
-	        miny: panelMatrix.MIN_OFFSETY,
-	        maxy: panelMatrix.MAX_OFFSETY,
-	        scale: panelMatrix.matrix3d.a
-	      });
-	    } else {
-	      dx = touch.clientX - sx;
-	      dy = touch.clientY - sy;
-	      sx = touch.clientX;
-	      sy = touch.clientY;
-	      autoScroll.setDelta({
-	        x: dx,
-	        y: dy
-	      });
-	      move(dx, dy);
-	    }
-	  });
+	  function moving(type) {
+	    return function (e) {
+	      var touch, touch2;
+	      if (type === 'touch') {
+	        touch = e.touches[0];
+	        touch2 = e.touches[1];
+	      } else if (type === 'mouse') {
+	        touch = e;
+	        if (!isMouseDown) return;
+	      }
+	      if (touch2 && sx2 >= 0 && sy2 >= 0) {
+	        var newPinchLenght = Math.sqrt(Math.pow(Math.abs(touch.clientX - touch2.clientX), 2) + Math.pow(Math.abs(touch.clientY - touch2.clientY), 2));
+	        var deltaPinch = newPinchLenght - pinchLenght;
+	        pinchLenght = newPinchLenght;
+	        this.panel.style.transform = this.panelMatrix.addScale(deltaPinch / 100);
+	        this.scrollBar.init({
+	          translatex: -this.panelMatrix.matrix3d.j,
+	          translatey: -this.panelMatrix.matrix3d.k,
+	          minx: this.panelMatrix.MIN_OFFSETX,
+	          maxx: this.panelMatrix.MAX_OFFSETX,
+	          miny: this.panelMatrix.MIN_OFFSETY,
+	          maxy: this.panelMatrix.MAX_OFFSETY,
+	          scale: this.panelMatrix.matrix3d.a
+	        });
+	      } else {
+	        dx = touch.clientX - sx;
+	        dy = touch.clientY - sy;
+	        sx = touch.clientX;
+	        sy = touch.clientY;
+	        autoScroll.setDelta({
+	          x: dx,
+	          y: dy
+	        });
+	        this.move(dx, dy);
+	      }
+	    };
+	  }
 	
-	  panel.addEventListener('touchend', function (e) {
-	    var restTouch = e.touches[0];
-	    if (restTouch) {
-	      sx2 = sy2 = -1;
-	      sx = restTouch.clientX;
-	      sy = restTouch.clientY;
-	    } else {
-	      autoScroll.auto(move);
-	    }
-	  });
-	
-	  function move(deltaX, deltaY) {
-	    panel.style.transform = panelMatrix.translateDelta(deltaX, deltaY);
-	    scrollBarContext.scroll({
-	      translatex: -panelMatrix.matrix3d.j,
-	      translatey: -panelMatrix.matrix3d.k,
-	      minx: panelMatrix.MIN_OFFSETX,
-	      maxx: panelMatrix.MAX_OFFSETX,
-	      miny: panelMatrix.MIN_OFFSETY,
-	      maxy: panelMatrix.MAX_OFFSETY
-	    });
+	  function moveend(type) {
+	    return function (e) {
+	      if (type === 'touch') {
+	        var restTouch = e.touches[0];
+	      } else if (type === 'mouse') {
+	        isMouseDown = false;
+	      }
+	      if (restTouch) {
+	        sx2 = sy2 = -1;
+	        sx = restTouch.clientX;
+	        sy = restTouch.clientY;
+	      } else {
+	        autoScroll.auto(this.move.bind(this));
+	      }
+	    };
 	  }
 	}
+	
+	ScrollView.prototype.move = function (deltaX, deltaY) {
+	  this.panel.style.transform = this.panelMatrix.translateDelta(deltaX, deltaY);
+	  this.scrollBar.scroll({
+	    translatex: -this.panelMatrix.matrix3d.j,
+	    translatey: -this.panelMatrix.matrix3d.k,
+	    minx: this.panelMatrix.MIN_OFFSETX,
+	    maxx: this.panelMatrix.MAX_OFFSETX,
+	    miny: this.panelMatrix.MIN_OFFSETY,
+	    maxy: this.panelMatrix.MAX_OFFSETY
+	  });
+	};
+	
 	function createScrollBar(container) {
 	  var h = document.createElement('div');
 	  var v = document.createElement('div');
@@ -331,26 +371,41 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var panelWidth = _ref.panelWidth,
 	      panelHeight = _ref.panelHeight,
 	      containerWidth = _ref.containerWidth,
-	      containerHeight = _ref.containerHeight;
+	      containerHeight = _ref.containerHeight,
+	      maxScale = _ref.maxScale;
 	
 	  this.matrix3d = {
 	    a: 1, b: 0, c: 0, d: 0, e: 1, f: 0, g: 0, h: 0, i: 1, j: 0, k: 0, l: 0
+	  };
+	  this.option = {
+	    maxScale: maxScale || 1
 	  };
 	  this.panelWidth = panelWidth;
 	  this.panelHeight = panelHeight;
 	  this.containerWidth = containerWidth;
 	  this.containerHeight = containerHeight;
-	  this.maxX = panelWidth - containerWidth;
-	  this.maxY = panelHeight - containerHeight;
-	  this.originX = panelWidth / 2;
-	  this.originY = panelHeight / 2;
+	  this.originX = this.panelWidth / 2;
+	  this.originY = this.panelHeight / 2;
 	  this.originOffsetX = this.originX;
 	  this.originOffsetY = this.originY;
-	  this.MAX_OFFSETX = (this.matrix3d.a * this.panelWidth - this.panelWidth) / 2 + this.maxX;
-	  this.MIN_OFFSETX = -((this.matrix3d.a * this.panelWidth - this.panelWidth) / 2);
-	  this.MAX_OFFSETY = (this.matrix3d.e * this.panelHeight - this.panelHeight) / 2 + this.maxY;
-	  this.MIN_OFFSETY = -((this.matrix3d.e * this.panelHeight - this.panelHeight) / 2);
+	  this.setBoundary();
 	}
+	Matrix3D.prototype.setBoundary = function (panelHeight, panelWidth) {
+	  if (panelHeight) {
+	    this.panelHeight = panelHeight;
+	    this.originY = this.panelHeight / 2;
+	  }
+	  if (panelWidth) {
+	    this.panelWidth = panelWidth;
+	    this.originX = this.panelWidth / 2;
+	  }
+	  var maxX = this.panelWidth - this.containerWidth;
+	  var maxY = this.panelHeight - this.containerHeight;
+	  this.MAX_OFFSETX = (this.matrix3d.a * this.panelWidth - this.panelWidth) / 2 + maxX;
+	  this.MIN_OFFSETX = -((this.matrix3d.a * this.panelWidth - this.panelWidth) / 2);
+	  this.MAX_OFFSETY = (this.matrix3d.e * this.panelHeight - this.panelHeight) / 2 + maxY;
+	  this.MIN_OFFSETY = -((this.matrix3d.e * this.panelHeight - this.panelHeight) / 2);
+	};
 	Matrix3D.prototype.translate = function (x, y) {
 	  this.matrix3d.j = x;
 	  this.matrix3d.k = y;
@@ -377,23 +432,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return this.getMatrix3d();
 	};
 	Matrix3D.prototype.addScale = function (n) {
-	  var opt = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-	
 	  this.matrix3d.a += n;
 	  this.matrix3d.e += n;
-	  if (opt.min && this.matrix3d.a <= opt.min) {
-	    this.matrix3d.a = opt.min;
-	    this.matrix3d.e = opt.min;
+	  if (this.matrix3d.a <= 1) {
+	    this.matrix3d.a = 1;
+	    this.matrix3d.e = 1;
 	    n = 0;
-	  } else if (opt.max && this.matrix3d.a >= opt.max) {
-	    this.matrix3d.a = opt.max;
-	    this.matrix3d.e = opt.max;
+	  } else if (this.option.maxScale && this.matrix3d.a >= this.option.maxScale) {
+	    this.matrix3d.a = this.option.maxScale;
+	    this.matrix3d.e = this.option.maxScale;
 	    n = 0;
 	  }
-	  this.MAX_OFFSETX = (this.matrix3d.a * this.panelWidth - this.panelWidth) / 2 + this.maxX;
-	  this.MIN_OFFSETX = -((this.matrix3d.a * this.panelWidth - this.panelWidth) / 2);
-	  this.MAX_OFFSETY = (this.matrix3d.e * this.panelHeight - this.panelHeight) / 2 + this.maxY;
-	  this.MIN_OFFSETY = -((this.matrix3d.e * this.panelHeight - this.panelHeight) / 2);
+	  this.setBoundary();
 	  this.translateDelta(-n * (this.originOffsetX - this.originX), -n * (this.originOffsetY - this.originY));
 	  return this.getMatrix3d();
 	};
@@ -447,14 +497,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.h.style.height = this.scrollbarHeight + 'px';
 	  this.v.style.width = this.scrollbarWidth + 'px';
 	  this.scroll({ translatex: translatex, translatey: translatey, minx: minx, maxx: maxx, miny: miny, maxy: maxy });
-	};
-	ScrollBar.prototype.update = function (startOffsetX, startOffsetY) {
-	  this.offsetX = startOffsetX;
-	  this.offsetY = startOffsetY;
-	  this.top = -startOffsetY * this.ratioH;
-	  this.left = -startOffsetX * this.ratioV;
-	  this.h.style.transform = 'translate3d(0, ' + this.top + 'px, 0)';
-	  this.v.style.transform = 'translate3d(' + this.left + 'px, 0, 0)';
 	};
 	ScrollBar.prototype.scroll = function (_ref2) {
 	  var translatex = _ref2.translatex,
