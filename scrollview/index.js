@@ -3,30 +3,31 @@ import Matrix from './matrix'
 import ScrollBar from './scrollbar'
 
 function ScrollView (container, opt) {
+  this.container = container
+  this.panel = container.children[0]
+  if (!this.panel) return
+  this.opt = opt
+  // 修复容器属性
   container.style.overflow = 'hidden'
   container.style.position = 'relative'
   // 获取属性配置
-  var maxScale = opt.maxScale || 4
   let { scrollBarH, scrollBarV } = createScrollBar(container)
-  // panel
-  var panel = container.children[0]
-  if (!panel) return
   var containerClientHeight = container.clientHeight
   var containerClientWidth = container.clientWidth
   var startOffsetX = -(containerClientWidth / 2)
   var startOffsetY = -(containerClientHeight / 2)
-  var autoScroll = new InertiaScroll(panel)
-  var panelMatrix = new Matrix({
-    panelWidth: panel.clientWidth,
-    panelHeight: panel.clientHeight,
+  var autoScroll = new InertiaScroll(this.panel)
+  this.panelMatrix = new Matrix({
+    panelWidth: this.panel.clientWidth,
+    panelHeight: this.panel.clientHeight,
     containerWidth: container.clientWidth,
     containerHeight: container.clientHeight,
-    maxScale: maxScale
+    maxScale: this.opt.maxScale || 4
   })
-  panel.style.transformOrigin = 'center center'
+  this.panel.style.transformOrigin = 'center center'
   // 把面板中心放到容器中间
-  panel.style.transform = panelMatrix.translate(startOffsetX, startOffsetY)
-  var scrollBarContext = new ScrollBar(container, panel, scrollBarH, scrollBarV)
+  this.panel.style.transform = this.panelMatrix.translate(startOffsetX, startOffsetY)
+  this.scrollBar = new ScrollBar(container, this.panel, scrollBarH, scrollBarV)
   // 单指当前点击位置x
   var sx = 0
 // 单指当前点击位置y
@@ -40,8 +41,11 @@ function ScrollView (container, opt) {
   var sy2 = -1
 // 双指初始长度
   var pinchLenght = 0
-  panel.addEventListener('touchstart', function (e) {
-  // 阻止默认滑动事件
+  this.panel.addEventListener('touchstart', movestart.bind(this))
+  this.panel.addEventListener('touchmove', moving.bind(this))
+  this.panel.addEventListener('touchend', moveend.bind(this))
+  function movestart (e) {
+    // 阻止默认滑动事件
     e.preventDefault()
     var touch = e.touches[0]
     var touch2 = e.touches[1]
@@ -51,12 +55,12 @@ function ScrollView (container, opt) {
       pinchLenght = Math.sqrt(Math.pow(Math.abs(touch.clientX - touch2.clientX), 2) + Math.pow(Math.abs(touch.clientY - touch2.clientY), 2))
       var cx = Math.abs(touch.clientX + touch2.clientX) / 2
       var cy = Math.abs(touch.clientY + touch2.clientY) / 2
-      var panelPosition = panel.getBoundingClientRect()
+      var panelPosition = this.panel.getBoundingClientRect()
       var transformOriginX = cx - panelPosition.left
       var transformOriginY = cy - panelPosition.top
-      var OriginOffsetX = (transformOriginX / panelPosition.width) * panel.clientWidth
-      var OriginOffsetY = (transformOriginY / panelPosition.height) * panel.clientHeight
-      panelMatrix.setOriginOffset(OriginOffsetX, OriginOffsetY)
+      var OriginOffsetX = (transformOriginX / panelPosition.width) * this.panel.clientWidth
+      var OriginOffsetY = (transformOriginY / panelPosition.height) * this.panel.clientHeight
+      this.panelMatrix.setOriginOffset(OriginOffsetX, OriginOffsetY)
     }
     sx = touch.clientX
     sy = touch.clientY
@@ -64,24 +68,24 @@ function ScrollView (container, opt) {
       x: sx,
       y: sy
     })
-  })
+  }
 
-  panel.addEventListener('touchmove', function (e) {
+  function moving (e) {
     var touch = e.touches[0]
     var touch2 = e.touches[1]
     if (touch2 && sx2 >= 0 && sy2 >= 0) {
       var newPinchLenght = Math.sqrt(Math.pow(Math.abs(touch.clientX - touch2.clientX), 2) + Math.pow(Math.abs(touch.clientY - touch2.clientY), 2))
       var deltaPinch = newPinchLenght - pinchLenght
       pinchLenght = newPinchLenght
-      panel.style.transform = panelMatrix.addScale(deltaPinch / 100)
-      scrollBarContext.init({
-        translatex: -panelMatrix.matrix3d.j,
-        translatey: -panelMatrix.matrix3d.k,
-        minx: panelMatrix.MIN_OFFSETX,
-        maxx: panelMatrix.MAX_OFFSETX,
-        miny: panelMatrix.MIN_OFFSETY,
-        maxy: panelMatrix.MAX_OFFSETY,
-        scale: panelMatrix.matrix3d.a
+      this.panel.style.transform = this.panelMatrix.addScale(deltaPinch / 100)
+      this.scrollBar.init({
+        translatex: -this.panelMatrix.matrix3d.j,
+        translatey: -this.panelMatrix.matrix3d.k,
+        minx: this.panelMatrix.MIN_OFFSETX,
+        maxx: this.panelMatrix.MAX_OFFSETX,
+        miny: this.panelMatrix.MIN_OFFSETY,
+        maxy: this.panelMatrix.MAX_OFFSETY,
+        scale: this.panelMatrix.matrix3d.a
       })
     } else {
       dx = touch.clientX - sx
@@ -92,33 +96,34 @@ function ScrollView (container, opt) {
         x: dx,
         y: dy
       })
-      move(dx, dy)
+      this.move(dx, dy)
     }
-  })
+  }
 
-  panel.addEventListener('touchend', function (e) {
+  function moveend (e) {
     var restTouch = e.touches[0]
     if (restTouch) {
       sx2 = sy2 = -1
       sx = restTouch.clientX
       sy = restTouch.clientY
     } else {
-      autoScroll.auto(move)
+      autoScroll.auto(this.move.bind(this))
     }
-  })
-
-  function move (deltaX, deltaY) {
-    panel.style.transform = panelMatrix.translateDelta(deltaX, deltaY)
-    scrollBarContext.scroll({
-      translatex: -panelMatrix.matrix3d.j,
-      translatey: -panelMatrix.matrix3d.k,
-      minx: panelMatrix.MIN_OFFSETX,
-      maxx: panelMatrix.MAX_OFFSETX,
-      miny: panelMatrix.MIN_OFFSETY,
-      maxy: panelMatrix.MAX_OFFSETY
-    })
   }
 }
+
+ScrollView.prototype.move = function (deltaX, deltaY) {
+  this.panel.style.transform = this.panelMatrix.translateDelta(deltaX, deltaY)
+  this.scrollBar.scroll({
+    translatex: -this.panelMatrix.matrix3d.j,
+    translatey: -this.panelMatrix.matrix3d.k,
+    minx: this.panelMatrix.MIN_OFFSETX,
+    maxx: this.panelMatrix.MAX_OFFSETX,
+    miny: this.panelMatrix.MIN_OFFSETY,
+    maxy: this.panelMatrix.MAX_OFFSETY
+  })
+}
+
 function createScrollBar (container) {
   var h = document.createElement('div')
   var v = document.createElement('div')

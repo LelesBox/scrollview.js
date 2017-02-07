@@ -26,14 +26,6 @@ ScrollBar.prototype.init = function ({ translatex, translatey, minx, maxx, miny,
   this.v.style.width = this.scrollbarWidth + 'px'
   this.scroll({ translatex, translatey, minx, maxx, miny, maxy })
 }
-ScrollBar.prototype.update = function (startOffsetX, startOffsetY) {
-  this.offsetX = startOffsetX
-  this.offsetY = startOffsetY
-  this.top = -(startOffsetY) * this.ratioH
-  this.left = -(startOffsetX) * this.ratioV
-  this.h.style.transform = `translate3d(0, ${this.top}px, 0)`
-  this.v.style.transform = `translate3d(${this.left}px, 0, 0)`
-}
 ScrollBar.prototype.scroll = function ({ translatex, translatey, minx, maxx, miny, maxy }) {
   var left = (translatex - minx) / (maxx - minx)
   var top = (translatey - miny) / (maxy - miny)

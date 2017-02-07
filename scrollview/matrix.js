@@ -13,15 +13,26 @@ function Matrix3D ({ panelWidth, panelHeight, containerWidth, containerHeight, m
   this.panelHeight = panelHeight
   this.containerWidth = containerWidth
   this.containerHeight = containerHeight
-  this.maxX = panelWidth - containerWidth
-  this.maxY = panelHeight - containerHeight
-  this.originX = panelWidth / 2
-  this.originY = panelHeight / 2
+  this.originX = this.panelWidth / 2
+  this.originY = this.panelHeight / 2
   this.originOffsetX = this.originX
   this.originOffsetY = this.originY
-  this.MAX_OFFSETX = ((this.matrix3d.a * this.panelWidth - this.panelWidth) / 2 + this.maxX)
+  this.setBoundary()
+}
+Matrix3D.prototype.setBoundary = function (panelHeight, panelWidth) {
+  if (panelHeight) {
+    this.panelHeight = panelHeight
+    this.originY = this.panelHeight / 2
+  }
+  if (panelWidth) {
+    this.panelWidth = panelWidth
+    this.originX = this.panelWidth / 2
+  }
+  var maxX = this.panelWidth - this.containerWidth
+  var maxY = this.panelHeight - this.containerHeight
+  this.MAX_OFFSETX = ((this.matrix3d.a * this.panelWidth - this.panelWidth) / 2 + maxX)
   this.MIN_OFFSETX = -((this.matrix3d.a * this.panelWidth - this.panelWidth) / 2)
-  this.MAX_OFFSETY = ((this.matrix3d.e * this.panelHeight - this.panelHeight) / 2 + this.maxY)
+  this.MAX_OFFSETY = ((this.matrix3d.e * this.panelHeight - this.panelHeight) / 2 + maxY)
   this.MIN_OFFSETY = -((this.matrix3d.e * this.panelHeight - this.panelHeight) / 2)
 }
 Matrix3D.prototype.translate = function (x, y) {
@@ -61,10 +72,7 @@ Matrix3D.prototype.addScale = function (n) {
     this.matrix3d.e = this.option.maxScale
     n = 0
   }
-  this.MAX_OFFSETX = ((this.matrix3d.a * this.panelWidth - this.panelWidth) / 2 + this.maxX)
-  this.MIN_OFFSETX = -((this.matrix3d.a * this.panelWidth - this.panelWidth) / 2)
-  this.MAX_OFFSETY = ((this.matrix3d.e * this.panelHeight - this.panelHeight) / 2 + this.maxY)
-  this.MIN_OFFSETY = -((this.matrix3d.e * this.panelHeight - this.panelHeight) / 2)
+  this.setBoundary()
   this.translateDelta((-n * (this.originOffsetX - this.originX)), (-n * (this.originOffsetY - this.originY)))
   return this.getMatrix3d()
 }
