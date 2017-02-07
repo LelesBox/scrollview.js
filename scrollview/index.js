@@ -2,9 +2,11 @@ import InertiaScroll from './inertiaScroll'
 import Matrix from './matrix'
 import ScrollBar from './scrollbar'
 
-function ScrollView (container) {
+function ScrollView (container, opt) {
   container.style.overflow = 'hidden'
   container.style.position = 'relative'
+  // 获取属性配置
+  var maxScale = opt.maxScale || 4
   let { scrollBarH, scrollBarV } = createScrollBar(container)
   // panel
   var panel = container.children[0]
@@ -18,7 +20,8 @@ function ScrollView (container) {
     panelWidth: panel.clientWidth,
     panelHeight: panel.clientHeight,
     containerWidth: container.clientWidth,
-    containerHeight: container.clientHeight
+    containerHeight: container.clientHeight,
+    maxScale: maxScale
   })
   panel.style.transformOrigin = 'center center'
   // 把面板中心放到容器中间
@@ -70,10 +73,7 @@ function ScrollView (container) {
       var newPinchLenght = Math.sqrt(Math.pow(Math.abs(touch.clientX - touch2.clientX), 2) + Math.pow(Math.abs(touch.clientY - touch2.clientY), 2))
       var deltaPinch = newPinchLenght - pinchLenght
       pinchLenght = newPinchLenght
-      panel.style.transform = panelMatrix.addScale(deltaPinch / 100, {
-        max: 4,
-        min: 1
-      })
+      panel.style.transform = panelMatrix.addScale(deltaPinch / 100)
       scrollBarContext.init({
         translatex: -panelMatrix.matrix3d.j,
         translatey: -panelMatrix.matrix3d.k,

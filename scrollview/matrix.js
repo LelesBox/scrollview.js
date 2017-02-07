@@ -2,9 +2,12 @@
  * 面板矩阵变换管理
  * @param {any} { maxX, maxY }
  */
-function Matrix3D ({ panelWidth, panelHeight, containerWidth, containerHeight }) {
+function Matrix3D ({ panelWidth, panelHeight, containerWidth, containerHeight, maxScale }) {
   this.matrix3d = {
     a: 1, b: 0, c: 0, d: 0, e: 1, f: 0, g: 0, h: 0, i: 1, j: 0, k: 0, l: 0
+  }
+  this.option = {
+    maxScale: maxScale || 1
   }
   this.panelWidth = panelWidth
   this.panelHeight = panelHeight
@@ -46,16 +49,16 @@ Matrix3D.prototype.scale = function (n) {
   this.matrix3d.e = n
   return this.getMatrix3d()
 }
-Matrix3D.prototype.addScale = function (n, opt = {}) {
+Matrix3D.prototype.addScale = function (n) {
   this.matrix3d.a += n
   this.matrix3d.e += n
-  if (opt.min && this.matrix3d.a <= opt.min) {
-    this.matrix3d.a = opt.min
-    this.matrix3d.e = opt.min
+  if (this.matrix3d.a <= 1) {
+    this.matrix3d.a = 1
+    this.matrix3d.e = 1
     n = 0
-  } else if (opt.max && this.matrix3d.a >= opt.max) {
-    this.matrix3d.a = opt.max
-    this.matrix3d.e = opt.max
+  } else if (this.option.maxScale && this.matrix3d.a >= this.option.maxScale) {
+    this.matrix3d.a = this.option.maxScale
+    this.matrix3d.e = this.option.maxScale
     n = 0
   }
   this.MAX_OFFSETX = ((this.matrix3d.a * this.panelWidth - this.panelWidth) / 2 + this.maxX)
