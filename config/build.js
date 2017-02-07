@@ -4,7 +4,7 @@ module.exports = {
   entry: './scrollview/index.js',
   output: {
     filename: 'scrollview.js',
-    library: 'scrollview',
+    library: 'ScrollView',
     libraryTarget: 'umd',
     path: path.resolve(__dirname, '../dist')
   },

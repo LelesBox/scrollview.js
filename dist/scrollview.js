@@ -4,9 +4,9 @@
 	else if(typeof define === 'function' && define.amd)
 		define([], factory);
 	else if(typeof exports === 'object')
-		exports["scrollview"] = factory();
+		exports["ScrollView"] = factory();
 	else
-		root["scrollview"] = factory();
+		root["ScrollView"] = factory();
 })(this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
