@@ -41,73 +41,106 @@ function ScrollView (container, opt) {
   var sy2 = -1
 // 双指初始长度
   var pinchLenght = 0
-  this.panel.addEventListener('touchstart', movestart.bind(this))
-  this.panel.addEventListener('touchmove', moving.bind(this))
-  this.panel.addEventListener('touchend', moveend.bind(this))
-  function movestart (e) {
-    // 阻止默认滑动事件
+  this.panel.addEventListener('touchstart', movestart('touch').bind(this))
+  this.panel.addEventListener('touchmove', moving('touch').bind(this))
+  this.panel.addEventListener('touchend', moveend('touch').bind(this))
+  // 支持鼠标拖动
+  var isMouseDown = false
+  this.panel.addEventListener('mousedown', movestart('mouse').bind(this))
+  this.panel.addEventListener('mousemove', moving('mouse').bind(this))
+  this.panel.addEventListener('mouseup', moveend('mouse').bind(this))
+  this.panel.addEventListener('mousewheel', (e) => {
     e.preventDefault()
-    var touch = e.touches[0]
-    var touch2 = e.touches[1]
-    if (touch2) {
-      sx2 = touch2.clientX
-      sy2 = touch2.clientY
-      pinchLenght = Math.sqrt(Math.pow(Math.abs(touch.clientX - touch2.clientX), 2) + Math.pow(Math.abs(touch.clientY - touch2.clientY), 2))
-      var cx = Math.abs(touch.clientX + touch2.clientX) / 2
-      var cy = Math.abs(touch.clientY + touch2.clientY) / 2
-      var panelPosition = this.panel.getBoundingClientRect()
-      var transformOriginX = cx - panelPosition.left
-      var transformOriginY = cy - panelPosition.top
-      var OriginOffsetX = (transformOriginX / panelPosition.width) * this.panel.clientWidth
-      var OriginOffsetY = (transformOriginY / panelPosition.height) * this.panel.clientHeight
-      this.panelMatrix.setOriginOffset(OriginOffsetX, OriginOffsetY)
-    }
-    sx = touch.clientX
-    sy = touch.clientY
-    autoScroll.init({
-      x: sx,
-      y: sy
-    })
-  }
-
-  function moving (e) {
-    var touch = e.touches[0]
-    var touch2 = e.touches[1]
-    if (touch2 && sx2 >= 0 && sy2 >= 0) {
-      var newPinchLenght = Math.sqrt(Math.pow(Math.abs(touch.clientX - touch2.clientX), 2) + Math.pow(Math.abs(touch.clientY - touch2.clientY), 2))
-      var deltaPinch = newPinchLenght - pinchLenght
-      pinchLenght = newPinchLenght
-      this.panel.style.transform = this.panelMatrix.addScale(deltaPinch / 100)
-      this.scrollBar.init({
-        translatex: -this.panelMatrix.matrix3d.j,
-        translatey: -this.panelMatrix.matrix3d.k,
-        minx: this.panelMatrix.MIN_OFFSETX,
-        maxx: this.panelMatrix.MAX_OFFSETX,
-        miny: this.panelMatrix.MIN_OFFSETY,
-        maxy: this.panelMatrix.MAX_OFFSETY,
-        scale: this.panelMatrix.matrix3d.a
-      })
-    } else {
-      dx = touch.clientX - sx
-      dy = touch.clientY - sy
-      sx = touch.clientX
-      sy = touch.clientY
-      autoScroll.setDelta({
-        x: dx,
-        y: dy
-      })
-      this.move(dx, dy)
+    this.move(-e.deltaX, -e.deltaY)
+  })
+  function movestart (type) {
+    return function (e) {
+    // 阻止默认滑动事件
+      e.preventDefault()
+      var touch, touch2
+      if (type === 'touch') {
+        touch = e.touches[0]
+        touch2 = e.touches[1]
+      } else if (type === 'mouse') {
+        touch = e
+        isMouseDown = true
+      }
+      if (touch2) {
+        sx2 = touch2.clientX
+        sy2 = touch2.clientY
+        pinchLenght = Math.sqrt(Math.pow(Math.abs(touch.clientX - touch2.clientX), 2) + Math.pow(Math.abs(touch.clientY - touch2.clientY), 2))
+        var cx = Math.abs(touch.clientX + touch2.clientX) / 2
+        var cy = Math.abs(touch.clientY + touch2.clientY) / 2
+        var panelPosition = this.panel.getBoundingClientRect()
+        var transformOriginX = cx - panelPosition.left
+        var transformOriginY = cy - panelPosition.top
+        var OriginOffsetX = (transformOriginX / panelPosition.width) * this.panel.clientWidth
+        var OriginOffsetY = (transformOriginY / panelPosition.height) * this.panel.clientHeight
+        this.panelMatrix.setOriginOffset(OriginOffsetX, OriginOffsetY)
+      }
+      if (touch) {
+        sx = touch.clientX
+        sy = touch.clientY
+        autoScroll.init({
+          x: sx,
+          y: sy
+        })
+      }
     }
   }
 
-  function moveend (e) {
-    var restTouch = e.touches[0]
-    if (restTouch) {
-      sx2 = sy2 = -1
-      sx = restTouch.clientX
-      sy = restTouch.clientY
-    } else {
-      autoScroll.auto(this.move.bind(this))
+  function moving (type) {
+    return function (e) {
+      var touch, touch2
+      if (type === 'touch') {
+        touch = e.touches[0]
+        touch2 = e.touches[1]
+      } else if (type === 'mouse') {
+        touch = e
+        if (!isMouseDown) return
+      }
+      if (touch2 && sx2 >= 0 && sy2 >= 0) {
+        var newPinchLenght = Math.sqrt(Math.pow(Math.abs(touch.clientX - touch2.clientX), 2) + Math.pow(Math.abs(touch.clientY - touch2.clientY), 2))
+        var deltaPinch = newPinchLenght - pinchLenght
+        pinchLenght = newPinchLenght
+        this.panel.style.transform = this.panelMatrix.addScale(deltaPinch / 100)
+        this.scrollBar.init({
+          translatex: -this.panelMatrix.matrix3d.j,
+          translatey: -this.panelMatrix.matrix3d.k,
+          minx: this.panelMatrix.MIN_OFFSETX,
+          maxx: this.panelMatrix.MAX_OFFSETX,
+          miny: this.panelMatrix.MIN_OFFSETY,
+          maxy: this.panelMatrix.MAX_OFFSETY,
+          scale: this.panelMatrix.matrix3d.a
+        })
+      } else {
+        dx = touch.clientX - sx
+        dy = touch.clientY - sy
+        sx = touch.clientX
+        sy = touch.clientY
+        autoScroll.setDelta({
+          x: dx,
+          y: dy
+        })
+        this.move(dx, dy)
+      }
+    }
+  }
+
+  function moveend (type) {
+    return function (e) {
+      if (type === 'touch') {
+        var restTouch = e.touches[0]
+      } else if (type === 'mouse') {
+        isMouseDown = false
+      }
+      if (restTouch) {
+        sx2 = sy2 = -1
+        sx = restTouch.clientX
+        sy = restTouch.clientY
+      } else {
+        autoScroll.auto(this.move.bind(this))
+      }
     }
   }
 }
