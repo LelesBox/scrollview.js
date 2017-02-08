@@ -12,10 +12,8 @@ function ScrollView (container, opt) {
   container.style.position = 'relative'
   // 获取属性配置
   let { scrollBarH, scrollBarV } = createScrollBar(container)
-  var containerClientHeight = container.clientHeight
-  var containerClientWidth = container.clientWidth
-  var startOffsetX = -(containerClientWidth / 2)
-  var startOffsetY = -(containerClientHeight / 2)
+  var startOffsetX = -(this.panel.clientWidth - container.clientWidth) / 2
+  var startOffsetY = -(this.panel.clientHeight - container.clientHeight) / 2
   var autoScroll = new InertiaScroll(this.panel)
   this.panelMatrix = new Matrix({
     panelWidth: this.panel.clientWidth,
